@@ -1,6 +1,8 @@
 import threading
 import time
 from collections import deque
+import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -12,6 +14,7 @@ import websocket
 WS_URL      = "ws://192.168.4.1:81"
 BUFFER_SIZE = 1000          
 RECONECTAR  = True
+CSV_FILENAME = "registro_MOTOR.csv"  # <-- NUEVO: Nombre del archivo CSV
 
 # Umbrales ISO 2372
 THR_GOOD    = 0.05
@@ -37,6 +40,14 @@ def on_message(ws, message):
         partes = message.split(",")
         if len(partes) < 7:
             return
+
+        # --- NUEVO: Guardar en CSV ------------------------------------------
+        # Capturamos la hora del sistema (con milisegundos)
+        fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        # Abrimos en modo "a" (append) para no borrar lo anterior
+        with open(CSV_FILENAME, "a") as f:
+            f.write(f"{fecha_hora},{message}\n")
+        # --------------------------------------------------------------------
 
         ts   = int(partes[0]) / 1000.0    # ms → s
         rpm  = int(partes[1])
@@ -234,6 +245,13 @@ def actualizar(frame):
 
 # ─── Main ───────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    # --- NUEVO: Creación inicial del CSV si no existe ---
+    # Esto agrega la cabecera indicando las columnas la primera vez que corre.
+    if not os.path.exists(CSV_FILENAME):
+        with open(CSV_FILENAME, "w") as f:
+            f.write("Fecha_Hora_PC,Timestamp_ESP_ms,RPM,AccX_g,AccY_g,FiltX_g,FiltY_g,Vibracion_RMS_g\n")
+    # ----------------------------------------------------
+
     t = threading.Thread(target=hilo_ws, daemon=True)
     t.start()
 
