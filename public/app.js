@@ -40,13 +40,10 @@ window.uplotVivo = null;
 window.uplotHistorico = null;
 
 // Buffers de Datos
-let chartDataVivo = [
-    Array.from({length: windowSize}, (_, i) => i),
-    new Array(windowSize).fill(0)
-];
-
+const xDataWindow = new Float32Array(windowSize).map((_, i) => i);
+let chartDataVivo = [ xDataWindow, new Float32Array(windowSize) ];
+let chartDataHistorico = [ xDataWindow, new Float32Array(windowSize) ];
 let historicalDataRaw = [];
-let chartDataHistorico = [[], []];
 
 // ==========================================
 // INICIALIZACIÓN DE GRÁFICAS
@@ -106,10 +103,7 @@ function initHistoricoChart() {
         cursor: { show: true }
     };
     // Inicializar vacía
-    chartDataHistorico = [
-        Array.from({length: windowSize}, (_, i) => i),
-        new Array(windowSize).fill(0)
-    ];
+    chartDataHistorico[1].fill(0);
     window.uplotHistorico = new uPlot(optsHist, chartDataHistorico, graficaContenedorHistorico);
 }
 
@@ -232,10 +226,7 @@ async function loadHistoricalData() {
         playbackSlider.value = 0;
         playbackIndex = 0;
         
-        chartDataHistorico = [
-            Array.from({length: windowSize}, (_, i) => i),
-            new Array(windowSize).fill(0)
-        ];
+        chartDataHistorico[1].fill(0);
         
         if (!window.uplotHistorico) initHistoricoChart();
         window.uplotHistorico.setData(chartDataHistorico);
@@ -297,10 +288,8 @@ function startPlayback() {
             const vibValue = currentData.vibRMS !== undefined ? currentData.vibRMS : (currentData.valor_vibracion || 0);
             const rpmValue = currentData.rpm || 0;
             
-            chartDataHistorico[1].push(vibValue);
-            if (chartDataHistorico[1].length > windowSize) {
-                chartDataHistorico[1].shift();
-            }
+            chartDataHistorico[1].copyWithin(0, 1);
+            chartDataHistorico[1][windowSize - 1] = vibValue;
             
             uiAccumulatorRpm += rpmValue;
             uiAccumulatorVib += vibValue;
@@ -344,8 +333,8 @@ if (playbackSlider) {
             updateRPM(data.rpm || 0);
             updateISO(vibValue);
             
-            chartDataHistorico[1].push(vibValue);
-            if (chartDataHistorico[1].length > windowSize) chartDataHistorico[1].shift();
+            chartDataHistorico[1].copyWithin(0, 1);
+            chartDataHistorico[1][windowSize - 1] = vibValue;
             if (window.uplotHistorico) window.uplotHistorico.setData(chartDataHistorico);
         }
     };
@@ -357,14 +346,14 @@ if (playbackSlider) {
 
 function renderLoopVivo() {
     if (currentMode === 'vivo' && incomingDataBuffer.length > 0) {
-        const newPoints = [...incomingDataBuffer];
-        incomingDataBuffer = [];
-        
-        newPoints.forEach(val => {
-            chartDataVivo[1].push(val);
-            if (chartDataVivo[1].length > windowSize) chartDataVivo[1].shift();
-        });
-        
+        const len = incomingDataBuffer.length;
+        if (len >= windowSize) {
+            chartDataVivo[1].set(incomingDataBuffer.slice(-windowSize));
+        } else {
+            chartDataVivo[1].copyWithin(0, len);
+            chartDataVivo[1].set(incomingDataBuffer, windowSize - len);
+        }
+        incomingDataBuffer.length = 0;
         if (window.uplotVivo) window.uplotVivo.setData(chartDataVivo);
     }
     requestAnimationFrame(renderLoopVivo);
@@ -376,7 +365,7 @@ setInterval(() => {
         const avgVib = uiBuffer.vib.reduce((a, b) => a + b, 0) / uiBuffer.vib.length;
         updateRPM(avgRPM);
         updateISO(avgVib);
-        uiBuffer.rpm = []; uiBuffer.vib = [];
+        uiBuffer.rpm.length = 0; uiBuffer.vib.length = 0;
     }
 }, 500);
 
