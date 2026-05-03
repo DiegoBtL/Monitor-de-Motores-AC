@@ -1,2 +1,4 @@
 *.csv
 __pycache__/
+node_modules/
+*.sqlite
