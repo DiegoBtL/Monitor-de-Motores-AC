@@ -1,12 +1,32 @@
 const express = require('express');
 const WebSocket = require('ws');
 const path = require('path');
-const { saveVibrationsBatch } = require('./database');
+const { saveVibrationsBatch, getHistoricalData, initDatabase } = require('./database');
 
 const app = express();
 const PORT = 3000;
 const WS_SERVER_PORT = 8080;
 const ESP_WS_URL = 'ws://192.168.4.1:81';
+
+// Endpoint para datos históricos
+app.get('/api/historico', (req, res) => {
+    const inicio = req.query.inicio;
+    const fin = req.query.fin;
+    let data;
+
+    try {
+        if (inicio && fin) {
+            data = getHistoricalData(inicio, fin);
+        } else {
+            const limit = 2000;
+            data = getHistoricalData(null, null, limit);
+        }
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al consultar la base de datos' });
+    }
+});
 
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -76,6 +96,11 @@ setInterval(() => {
         }
     }
 }, 200);
+
+// Initialize the database
+initDatabase().catch(err => {
+    console.error("Failed to initialize database:", err);
+});
 
 app.listen(PORT, () => {
     console.log(`\n=================================================`);

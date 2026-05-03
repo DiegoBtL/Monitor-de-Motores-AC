@@ -57,24 +57,74 @@
     <!-- Contenido Principal con Grid: 75% - 25% -->
     <main class="flex-1 p-4 grid grid-cols-12 gap-4">
         
-        <!-- Área Principal - Gráfica (75%) -->
-        <section class="col-span-9 flex flex-col">
-            <div id="grafica-principal" class="flex-1 bg-dashboard-card rounded-2xl border border-dashboard-border p-6 shadow-xl shadow-black/20 relative overflow-hidden">
-                <!-- Decoración de esquina -->
-                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-accent-blue/5 to-transparent rounded-bl-3xl"></div>
-                
-                <!-- Grid de fondo sutil -->
-                <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(59,130,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.3) 1px, transparent 1px); background-size: 40px 40px;"></div>
-                
-                <div class="relative z-10 h-full flex items-center justify-center">
-                    <div class="text-center">
-                        <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-dashboard-border/50 flex items-center justify-center">
-                            <svg class="w-10 h-10 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                            </svg>
+        <!-- Área Principal - Contenedores de Gráficas -->
+        <section class="col-span-9 flex flex-col gap-4">
+            <!-- Gráfica en Vivo -->
+            <div id="container-vivo" class="flex-1 bg-dashboard-card rounded-2xl border border-dashboard-border p-6 shadow-xl shadow-black/20 relative overflow-hidden">
+                <div id="grafica-principal" class="h-full w-full">
+                    <!-- Grid de fondo sutil -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(59,130,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.3) 1px, transparent 1px); background-size: 40px 40px;"></div>
+                    <div class="relative z-10 h-full flex items-center justify-center text-gray-500">
+                        <p class="text-lg">Iniciando Gráfica en Tiempo Real...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Análisis Histórico (Oculto por defecto) -->
+            <div id="container-historico" class="hidden flex-1 flex flex-col gap-4">
+
+                <!-- Panel de Filtros -->
+                <div class="bg-dashboard-card rounded-2xl border border-dashboard-border p-4 shadow-xl shadow-black/20 flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label for="inicio" class="text-sm text-gray-400">Inicio:</label>
+                        <input type="datetime-local" id="inicio" class="bg-dashboard-bg border border-dashboard-border text-gray-300 text-xs rounded-lg p-2 focus:ring-accent-blue outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="fin" class="text-sm text-gray-400">Fin:</label>
+                        <input type="datetime-local" id="fin" class="bg-dashboard-bg border border-dashboard-border text-gray-300 text-xs rounded-lg p-2 focus:ring-accent-blue outline-none">
+                    </div>
+                    <button id="btn-load-data" class="bg-accent-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Cargar Datos</span>
+                    </button>
+                </div>
+
+                <!-- Gráfica Histórica -->
+                <div class="flex-1 bg-dashboard-card rounded-2xl border border-dashboard-border p-6 shadow-xl shadow-black/20 relative overflow-hidden">
+                    <div id="grafica-historico" class="h-full w-full"></div>
+                </div>
+
+                <!-- Controles de Playback -->
+                <div class="bg-dashboard-card rounded-2xl border border-dashboard-border p-4 shadow-xl shadow-black/20">
+                    <div class="flex flex-col gap-4">
+                        <!-- Slider de Tiempo -->
+                        <div class="flex items-center gap-4">
+                            <span id="playback-time-start" class="text-xs font-mono text-gray-500">00:00</span>
+                            <input type="range" id="playback-slider" class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent-blue" min="0" value="0" step="1">
+                            <span id="playback-time-end" class="text-xs font-mono text-gray-500">00:00</span>
                         </div>
-                        <p class="text-lg font-medium text-gray-300">Gráfica en Tiempo Real</p>
-                        <p class="text-sm text-gray-500 mt-1">Waveform de vibración</p>
+
+                        <!-- Botones de Acción -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button id="btn-play" class="p-2 text-accent-green hover:bg-accent-green/10 rounded-full transition-colors">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path></svg>
+                                </button>
+                                <button id="btn-pause" class="p-2 text-accent-yellow hover:bg-accent-yellow/10 rounded-full transition-colors hidden">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"></path></svg>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <select id="select-speed" class="bg-dashboard-bg border border-dashboard-border text-gray-300 text-xs rounded-lg p-2 focus:ring-accent-blue outline-none">
+                                    <option value="1">Velocidad x1</option>
+                                    <option value="2">Velocidad x2</option>
+                                    <option value="5">Velocidad x5</option>
+                                    <option value="10">Velocidad x10</option>
+                                </select>
+                                <div id="playback-info" class="text-xs text-gray-500 font-mono">Puntos: 0 / 0</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
