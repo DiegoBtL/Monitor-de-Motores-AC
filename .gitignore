@@ -2,3 +2,7 @@
 __pycache__/
 node_modules/
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db-shm
+*.db-wal
